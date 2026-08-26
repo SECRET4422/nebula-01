@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 interface ThreeSceneProps {
@@ -15,6 +15,8 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   activeProjectId = 'aether',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [webglSupported, setWebglSupported] = useState<boolean>(true);
+
   const sceneRef = useRef<{
     renderer: THREE.WebGLRenderer;
     scene: THREE.Scene;
@@ -36,13 +38,32 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     currentWireOpacity: number;
     targetLightColor: THREE.Color;
     targetNoiseStrength: number;
+    isPaused: boolean;
+    isReducedMotion: boolean;
   } | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
+
+    // Detect device capabilities & preferences
+    const isMobile = window.innerWidth < 768;
+    const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // WebGL support check
+    try {
+      const testCanvas = document.createElement('canvas');
+      const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl');
+      if (!gl) {
+        setWebglSupported(false);
+        return;
+      }
+    } catch {
+      setWebglSupported(false);
+      return;
+    }
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x070709, 0.036);
@@ -50,26 +71,36 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     camera.position.set(0, 0, 7);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance',
-    });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
-    container.appendChild(renderer.domElement);
+    // Bounded pixel ratio for mobile battery and thermal efficiency
+    const maxPixelRatio = isMobile ? 1.5 : Math.min(window.devicePixelRatio, 2);
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: !isMobile,
+        alpha: true,
+        powerPreference: 'high-performance',
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(maxPixelRatio);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      container.appendChild(renderer.domElement);
+    } catch {
+      setWebglSupported(false);
+      return;
+    }
 
     const artifactGroup = new THREE.Group();
     scene.add(artifactGroup);
 
-    const geom = new THREE.IcosahedronGeometry(1.5, 26);
+    // Detail segment resolution scales gracefully with device
+    const segments = isMobile ? 18 : 26;
+    const geom = new THREE.IcosahedronGeometry(1.5, segments);
 
     const customMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uNoiseStrength: { value: 0.26 },
+        uNoiseStrength: { value: isReducedMotion ? 0.05 : 0.26 },
         uColor1: { value: new THREE.Color(0x00f0ff) },
         uColor2: { value: new THREE.Color(0x7000ff) },
         uColor3: { value: new THREE.Color(0x00ff88) },
@@ -175,7 +206,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     const mainMesh = new THREE.Mesh(geom, customMaterial);
     artifactGroup.add(mainMesh);
 
-    const wireGeom = new THREE.IcosahedronGeometry(1.75, 5);
+    const wireGeom = new THREE.IcosahedronGeometry(1.75, isMobile ? 3 : 5);
     const wireMat = new THREE.MeshBasicMaterial({
       color: 0x00f0ff,
       wireframe: true,
@@ -185,7 +216,8 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     const wireMesh = new THREE.Mesh(wireGeom, wireMat);
     artifactGroup.add(wireMesh);
 
-    const particleCount = 1400;
+    // Adaptive particle count based on hardware
+    const particleCount = isMobile ? 600 : 1400;
     const particleGeom = new THREE.BufferGeometry();
     const posArray = new Float32Array(particleCount * 3);
     const scaleArray = new Float32Array(particleCount);
@@ -205,7 +237,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     particleGeom.setAttribute('aScale', new THREE.BufferAttribute(scaleArray, 1));
 
     const particleMat = new THREE.PointsMaterial({
-      size: 0.032,
+      size: isMobile ? 0.04 : 0.032,
       color: 0x00f0ff,
       transparent: true,
       opacity: 0.35,
@@ -238,15 +270,26 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     const handleResize = () => {
-      if (!containerRef.current) return;
-      const w = containerRef.current.clientWidth;
-      const h = containerRef.current.clientHeight;
+      if (!containerRef.current || !renderer) return;
+      const w = containerRef.current.clientWidth || window.innerWidth;
+      const h = containerRef.current.clientHeight || window.innerHeight;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    // Page visibility state listener to pause render loop when tab is in background
+    const handleVisibilityChange = () => {
+      if (!sceneRef.current) return;
+      sceneRef.current.isPaused = document.hidden;
+      if (!document.hidden) {
+        sceneRef.current.clock.start();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     sceneRef.current = {
       renderer,
@@ -268,44 +311,51 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       targetWireOpacity: 0.12,
       currentWireOpacity: 0.12,
       targetLightColor: new THREE.Color(0x00f0ff),
-      targetNoiseStrength: 0.26,
+      targetNoiseStrength: isReducedMotion ? 0.05 : 0.26,
+      isPaused: false,
+      isReducedMotion,
     };
 
     const animate = () => {
       if (!sceneRef.current) return;
       const state = sceneRef.current;
-      const elapsedTime = state.clock.getElapsedTime();
 
-      state.mouse.x += (state.targetMouse.x - state.mouse.x) * 0.05;
-      state.mouse.y += (state.targetMouse.y - state.mouse.y) * 0.05;
+      if (!state.isPaused) {
+        const elapsedTime = state.clock.getElapsedTime();
 
-      state.artifactGroup.position.lerp(state.targetPos, 0.04);
-      const currentScale = state.artifactGroup.scale.x;
-      const newScale = THREE.MathUtils.lerp(currentScale, state.targetScale, 0.04);
-      state.artifactGroup.scale.setScalar(newScale);
+        state.mouse.x += (state.targetMouse.x - state.mouse.x) * 0.05;
+        state.mouse.y += (state.targetMouse.y - state.mouse.y) * 0.05;
 
-      state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, state.targetCameraZ, 0.04);
+        state.artifactGroup.position.lerp(state.targetPos, 0.04);
+        const currentScale = state.artifactGroup.scale.x;
+        const newScale = THREE.MathUtils.lerp(currentScale, state.targetScale, 0.04);
+        state.artifactGroup.scale.setScalar(newScale);
 
-      state.currentWireOpacity = THREE.MathUtils.lerp(state.currentWireOpacity, state.targetWireOpacity, 0.04);
-      (state.wireMesh.material as THREE.MeshBasicMaterial).opacity = state.currentWireOpacity;
+        state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, state.targetCameraZ, 0.04);
 
-      state.pointLight1.color.lerp(state.targetLightColor, 0.04);
+        state.currentWireOpacity = THREE.MathUtils.lerp(state.currentWireOpacity, state.targetWireOpacity, 0.04);
+        (state.wireMesh.material as THREE.MeshBasicMaterial).opacity = state.currentWireOpacity;
 
-      const mat = state.mainMesh.material as THREE.ShaderMaterial;
-      mat.uniforms.uTime.value = elapsedTime;
-      mat.uniforms.uNoiseStrength.value = THREE.MathUtils.lerp(
-        mat.uniforms.uNoiseStrength.value,
-        state.targetNoiseStrength,
-        0.04
-      );
+        state.pointLight1.color.lerp(state.targetLightColor, 0.04);
 
-      state.artifactGroup.rotation.y = elapsedTime * 0.18 + state.mouse.x * 0.45;
-      state.artifactGroup.rotation.x = Math.sin(elapsedTime * 0.15) * 0.15 + state.mouse.y * 0.3;
-      state.wireMesh.rotation.y = -elapsedTime * 0.12;
+        const mat = state.mainMesh.material as THREE.ShaderMaterial;
+        mat.uniforms.uTime.value = state.isReducedMotion ? 0 : elapsedTime;
+        mat.uniforms.uNoiseStrength.value = THREE.MathUtils.lerp(
+          mat.uniforms.uNoiseStrength.value,
+          state.targetNoiseStrength,
+          0.04
+        );
 
-      state.particles.rotation.y = elapsedTime * 0.025;
+        if (!state.isReducedMotion) {
+          state.artifactGroup.rotation.y = elapsedTime * 0.18 + state.mouse.x * 0.45;
+          state.artifactGroup.rotation.x = Math.sin(elapsedTime * 0.15) * 0.15 + state.mouse.y * 0.3;
+          state.wireMesh.rotation.y = -elapsedTime * 0.12;
+          state.particles.rotation.y = elapsedTime * 0.025;
+        }
 
-      state.renderer.render(state.scene, state.camera);
+        state.renderer.render(state.scene, state.camera);
+      }
+
       state.frameId = requestAnimationFrame(animate);
     };
 
@@ -314,6 +364,8 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+
       if (sceneRef.current) {
         cancelAnimationFrame(sceneRef.current.frameId);
         renderer.dispose();
@@ -342,74 +394,67 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     }
 
     if (p < 0.18) {
-      // 01: HERO
       state.targetPos.set(0, 0, 0);
       state.targetScale = 1.0;
       state.targetWireOpacity = 0.14;
       state.targetCameraZ = 7.0;
-      state.targetNoiseStrength = 0.26;
+      state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.26;
       state.targetLightColor.setHex(0x00f0ff);
     } else if (p < 0.38) {
-      // 02: MANIFESTO
       const t = (p - 0.18) / 0.2;
       state.targetPos.set(0, 0, -1.0);
       state.targetScale = 1.0 + t * 0.4;
       state.targetWireOpacity = 0.10 + t * 0.12;
       state.targetCameraZ = 7.5;
-      state.targetNoiseStrength = 0.22;
+      state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.22;
       state.targetLightColor.setHex(0x00f0ff);
     } else if (p < 0.62) {
-      // 03: SELECTED WORK (Personality shifts per active world)
       state.targetPos.set(2.0, 0.1, -1.2);
       state.targetScale = 0.9;
       state.targetCameraZ = 6.8;
 
       if (activeProjectId === 'nocturne') {
         state.targetLightColor.setHex(0x7000ff);
-        state.targetNoiseStrength = 0.42;
+        state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.42;
         state.targetWireOpacity = 0.08;
       } else if (activeProjectId === 'vector') {
         state.targetLightColor.setHex(0x00ff88);
-        state.targetNoiseStrength = 0.12;
-        state.targetWireOpacity = 0.35; // Sharp geometric wireframe
+        state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.12;
+        state.targetWireOpacity = 0.35;
       } else if (activeProjectId === 'echo') {
         state.targetLightColor.setHex(0xffb800);
-        state.targetNoiseStrength = 0.18;
+        state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.18;
         state.targetWireOpacity = 0.06;
       } else {
-        // Aether
         state.targetLightColor.setHex(0x00f0ff);
-        state.targetNoiseStrength = 0.34;
+        state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.34;
         state.targetWireOpacity = 0.12;
       }
     } else if (p < 0.78) {
-      // 04: EXPERIMENT LAB
       state.targetPos.set(-1.8, -0.1, -1.0);
       state.targetScale = 0.85;
       state.targetWireOpacity = 0.08;
       state.targetCameraZ = 7.0;
-      state.targetNoiseStrength = 0.25;
+      state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.25;
       state.targetLightColor.setHex(0x00f0ff);
     } else if (p < 0.92) {
-      // 05/06: SERVICES & PROCESS
       state.targetPos.set(0, 0.2, -0.8);
       state.targetScale = 0.95;
       state.targetWireOpacity = 0.10;
       state.targetCameraZ = 7.0;
-      state.targetNoiseStrength = 0.22;
+      state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.22;
       if (activeServiceHue !== undefined) {
         state.targetLightColor.setHSL(activeServiceHue / 360, 0.9, 0.55);
       } else {
         state.targetLightColor.setHex(0x00f0ff);
       }
     } else {
-      // 07: FINAL CTA
       const t = (p - 0.92) / 0.08;
       state.targetPos.set(0, 0, 0);
       state.targetScale = 1.0 + t * 0.3;
       state.targetWireOpacity = 0.18;
       state.targetCameraZ = 7.0 - t * 1.0;
-      state.targetNoiseStrength = 0.32;
+      state.targetNoiseStrength = state.isReducedMotion ? 0.05 : 0.32;
       state.targetLightColor.setHex(0x00f0ff);
     }
   }, [scrollProgress, scrollVelocity, activeServiceHue, activeProjectId]);
@@ -417,7 +462,9 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+      className={`fixed inset-0 pointer-events-none z-0 overflow-hidden ${
+        !webglSupported ? 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#00F0FF]/10 via-[#070709] to-[#070709]' : ''
+      }`}
       aria-hidden="true"
     />
   );

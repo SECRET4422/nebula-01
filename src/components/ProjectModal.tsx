@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { X, ArrowUpRight, CheckCircle2, Cpu, Sparkles, Layers } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, ArrowUpRight, Award, Layers } from 'lucide-react';
 import type { Project } from '../data/studioData';
 import { audioSynth } from '../utils/audioSynth';
 
@@ -14,194 +14,201 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onClose,
   onOpenContact,
 }) => {
-  const [activeImageIdx, setActiveImageIdx] = useState<number>(0);
+  const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
 
   useEffect(() => {
-    setActiveImageIdx(0);
+    setActiveImageIndex(0);
+    if (!project) return;
+
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        audioSynth.playClick();
+        onClose();
+      }
     };
-    if (project) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = originalStyle;
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [project, onClose]);
 
   if (!project) return null;
 
-  const allImages = [project.heroImage, ...project.galleryImages];
+  const allImages = [project.heroImage, ...(project.galleryImages || [])];
+  const currentImage = allImages[activeImageIndex] || project.heroImage;
 
   return (
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/90 backdrop-blur-2xl animate-fadeIn"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/85 backdrop-blur-xl animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-project-title"
     >
       <div
-        className="relative w-full max-w-5xl max-h-[92vh] bg-[#0E0E12] border border-white/20 rounded-2xl shadow-[0_0_80px_rgba(0,240,255,0.15)] overflow-y-auto flex flex-col"
+        className="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto bg-[#0C0C0F] border border-white/15 rounded-3xl p-6 sm:p-10 md:p-12 shadow-2xl space-y-10"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sticky Header Bar */}
-        <div className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 py-5 bg-[#0E0E12]/95 backdrop-blur-xl hairline-bottom">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs text-[#00F0FF] font-bold">{project.num} // CASE STUDY</span>
-            <span className="text-white/20">|</span>
-            <span className="font-tech text-xs tracking-wider uppercase text-[#8E8E93]">{project.category}</span>
+        {/* Modal Header */}
+        <div className="flex items-start justify-between border-b border-white/10 pb-6">
+          <div>
+            <div className="flex items-center gap-3 font-mono text-xs text-[#00F0FF] mb-2 tracking-wider">
+              <span>{project.num}</span>
+              <span>/</span>
+              <span>{project.category.toUpperCase()}</span>
+              <span>/</span>
+              <span>{project.year}</span>
+            </div>
+            <h2
+              id="modal-project-title"
+              className="font-display font-black text-3xl sm:text-5xl text-white uppercase tracking-tight"
+            >
+              {project.title}
+            </h2>
           </div>
+
           <button
             onClick={() => {
               audioSynth.playClick();
               onClose();
             }}
-            onMouseEnter={() => audioSynth.playHover()}
-            className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-[#8E8E93] hover:text-white hover:border-[#00F0FF] hover:bg-[#00F0FF]/15 transition-all"
+            className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center text-white hover:border-[#00F0FF] hover:bg-[#00F0FF]/10 transition-colors"
+            aria-label="Close project modal"
             data-cursor="CLOSE"
             data-magnetic="true"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 md:p-10 space-y-12 select-none">
-          {/* Title & Header */}
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-              <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white tracking-tight uppercase">
-                {project.title}
-              </h2>
-              <span className="font-mono text-xs px-3.5 py-1 rounded-full border border-[#00F0FF]/30 bg-[#00F0FF]/10 text-[#00F0FF] font-bold">
-                LAUNCHED {project.year}
-              </span>
+        {/* Gallery Image Inspector */}
+        <div className="space-y-4">
+          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-black/60 border border-white/10">
+            <img
+              src={currentImage}
+              alt={`${project.title} showcase visual ${activeImageIndex + 1}`}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover transition-all duration-500"
+            />
+            <div className="absolute top-4 left-4 font-mono text-[11px] px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-white flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-[#00F0FF]" />
+              <span>FRAME 0{activeImageIndex + 1} / 0{allImages.length}</span>
             </div>
-            <p className="font-sans text-lg md:text-xl text-[#8E8E93] font-light max-w-3xl leading-relaxed">
-              {project.tagline}
-            </p>
           </div>
 
-          {/* Interactive Media Showcase */}
-          <div className="space-y-4">
-            <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-white/15 group shadow-2xl bg-black">
-              <img
-                src={allImages[activeImageIdx]}
-                alt={project.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0E0E12] via-transparent to-transparent opacity-60" />
-              <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-white/90">
-                <span className="px-3 py-1 rounded bg-black/70 backdrop-blur-md border border-white/10">
-                  CLIENT: {project.client}
-                </span>
-                <span className="px-3 py-1 rounded bg-black/70 backdrop-blur-md border border-white/10">
-                  DURATION: {project.duration}
-                </span>
-              </div>
-            </div>
-
-            {/* Thumbnail Selectors */}
-            <div className="flex gap-3">
-              {allImages.map((img, idx) => (
+          {/* Interactive Thumbnail Gallery */}
+          {allImages.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {allImages.map((imgUrl, idx) => (
                 <button
                   key={idx}
                   onClick={() => {
-                    audioSynth.playClick();
-                    setActiveImageIdx(idx);
+                    audioSynth.playHover();
+                    setActiveImageIndex(idx);
                   }}
-                  className={`relative w-24 h-16 rounded-lg overflow-hidden border transition-all ${
-                    activeImageIdx === idx
-                      ? 'border-[#00F0FF] scale-105 shadow-md shadow-[#00F0FF]/30'
+                  className={`relative w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 border transition-all duration-200 ${
+                    activeImageIndex === idx
+                      ? 'border-[#00F0FF] ring-2 ring-[#00F0FF]/30 scale-105'
                       : 'border-white/15 opacity-60 hover:opacity-100'
                   }`}
+                  aria-label={`View image ${idx + 1}`}
                 >
-                  <img src={img} alt="thumb" className="w-full h-full object-cover" />
+                  <img
+                    src={imgUrl}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Key Metrics Stats Banner */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-6 md:p-8 rounded-xl bg-white/[0.02] border border-white/15 shadow-inner">
-            {project.stats.map((stat, i) => (
-              <div key={i} className="flex flex-col">
-                <span className="font-mono text-xs text-[#8E8E93] uppercase mb-1.5">{stat.label}</span>
-                <span className="font-display font-black text-2xl sm:text-3xl text-[#00F0FF] tracking-tight">{stat.value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Deep Architectural Narrative */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 hairline-top pt-8">
-            <div className="md:col-span-4 font-mono text-xs uppercase tracking-widest text-[#00F0FF] font-bold flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              01 // THE CHALLENGE
-            </div>
-            <div className="md:col-span-8 font-sans text-base text-[#8E8E93] leading-relaxed">
-              {project.challenge}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 hairline-top pt-8">
-            <div className="md:col-span-4 font-mono text-xs uppercase tracking-widest text-[#00FF88] font-bold flex items-center gap-2">
-              <Layers className="w-3.5 h-3.5" />
-              02 // ARCHITECTURAL SOLUTION
-            </div>
-            <div className="md:col-span-8 font-sans text-base text-[#8E8E93] leading-relaxed">
-              {project.solution}
-            </div>
-          </div>
-
-          {/* Tech Stack & Deliverables */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 hairline-top pt-8">
+        {/* Case Study Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8 space-y-6">
             <div>
-              <h4 className="font-mono text-xs uppercase text-[#8E8E93] mb-4 tracking-wider">TECHNOLOGIES USED</h4>
-              <div className="flex flex-wrap gap-2">
-                {project.techStack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="font-mono text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white flex items-center gap-2"
+              <h3 className="font-tech text-xs uppercase tracking-widest text-[#00F0FF] mb-2 font-bold">
+                Project Overview
+              </h3>
+              <p className="font-sans text-base sm:text-lg text-white/90 leading-relaxed font-light">
+                {project.overview}
+              </p>
+            </div>
+
+            {/* Impact Metric Cards */}
+            {project.stats && project.stats.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                {project.stats.map((stat, i) => (
+                  <div
+                    key={i}
+                    className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-start gap-4"
                   >
-                    <Cpu className="w-3.5 h-3.5 text-[#00F0FF]" />
+                    <div className="p-2.5 rounded-xl bg-[#00F0FF]/10 text-[#00F0FF]">
+                      <Award className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-display font-black text-2xl text-white">
+                        {stat.value}
+                      </div>
+                      <div className="font-mono text-xs text-[#8E8E93] uppercase tracking-wider">
+                        {stat.label}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="lg:col-span-4 space-y-6 bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+            <div>
+              <span className="font-mono text-xs uppercase tracking-wider text-[#8E8E93] block mb-1">
+                CLIENT
+              </span>
+              <span className="font-sans text-sm text-white font-medium">
+                {project.client}
+              </span>
+            </div>
+
+            <div>
+              <span className="font-mono text-xs uppercase tracking-wider text-[#8E8E93] block mb-2">
+                TECHNOLOGY STACK
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {project.techStack.map((tech, i) => (
+                  <span
+                    key={i}
+                    className="font-mono text-[11px] px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/80"
+                  >
                     {tech}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div>
-              <h4 className="font-mono text-xs uppercase text-[#8E8E93] mb-4 tracking-wider">KEY DELIVERABLES</h4>
-              <div className="space-y-2.5">
-                {project.deliverables.map((del) => (
-                  <div key={del} className="flex items-center gap-2.5 font-sans text-sm text-[#8E8E93]">
-                    <CheckCircle2 className="w-4 h-4 text-[#00FF88] flex-shrink-0" />
-                    <span>{del}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="pt-4 border-t border-white/10">
+              <button
+                onClick={() => {
+                  audioSynth.playClick();
+                  onOpenContact();
+                }}
+                className="w-full py-3.5 rounded-full bg-[#00F0FF] hover:bg-white text-black font-tech font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2"
+                data-cursor="INQUIRE"
+                data-magnetic="true"
+              >
+                <span>Request Commission</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
             </div>
-          </div>
-
-          {/* Bottom Commission Prompt */}
-          <div className="flex flex-wrap items-center justify-between gap-6 p-8 rounded-xl bg-[#00F0FF]/5 border border-[#00F0FF]/25 shadow-xl">
-            <div>
-              <h4 className="font-display font-bold text-xl text-white mb-1">Inspired by this project?</h4>
-              <p className="font-sans text-xs sm:text-sm text-[#8E8E93]">We can build a comparable world for your product or brand.</p>
-            </div>
-            <button
-              onClick={() => {
-                onClose();
-                onOpenContact();
-              }}
-              onMouseEnter={() => audioSynth.playHover()}
-              className="px-6 py-3 rounded-xl bg-[#00F0FF] hover:bg-white text-black font-tech font-bold text-xs uppercase tracking-wider transition-all duration-300 inline-flex items-center gap-2 shadow-lg shadow-[#00F0FF]/20"
-              data-cursor="COMMISSION"
-              data-magnetic="true"
-            >
-              <span>Commission Similar Project</span>
-              <ArrowUpRight className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>

@@ -26,11 +26,12 @@ export function App() {
 
   const lastScrollY = useRef<number>(0);
   const lastScrollTime = useRef<number>(performance.now());
+  const rafScrollId = useRef<number | null>(null);
 
   useEffect(() => {
     let timeoutId: number;
 
-    const handleScroll = () => {
+    const performScrollCalculations = () => {
       const now = performance.now();
       const currentScrollY = window.scrollY;
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -54,6 +55,14 @@ export function App() {
       timeoutId = window.setTimeout(() => {
         setScrollVelocity(0);
       }, 150);
+
+      rafScrollId.current = null;
+    };
+
+    const handleScroll = () => {
+      if (rafScrollId.current === null) {
+        rafScrollId.current = requestAnimationFrame(performScrollCalculations);
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -61,6 +70,7 @@ export function App() {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      if (rafScrollId.current) cancelAnimationFrame(rafScrollId.current);
       clearTimeout(timeoutId);
     };
   }, []);
@@ -98,7 +108,7 @@ export function App() {
       />
 
       {/* Main Narrative Page Sections */}
-      <main className="relative z-10">
+      <main className="relative z-10" id="main-content">
         <HeroSection />
         <ManifestoSection />
         <SelectedWorkSection
