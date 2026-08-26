@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Grid, Terminal, ArrowUpRight } from 'lucide-react';
+import { Volume2, VolumeX, ArrowUpRight } from 'lucide-react';
 import { audioSynth } from '../utils/audioSynth';
 
 interface NavbarProps {
@@ -8,34 +8,14 @@ interface NavbarProps {
   onToggleGrid: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-  onOpenContact,
-  gridVisible,
-  onToggleGrid,
-}) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenContact }) => {
   const [isMuted, setIsMuted] = useState<boolean>(true);
-  const [timeUtc, setTimeUtc] = useState<string>('');
   const [scrolled, setScrolled] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMuted(audioSynth.getMuted());
     const unsub = audioSynth.subscribe((muted) => setIsMuted(muted));
-
-    const updateClocks = () => {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', {
-        timeZone: 'UTC',
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-      setTimeUtc(`${timeStr} UTC`);
-    };
-
-    updateClocks();
-    const interval = setInterval(updateClocks, 1000);
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 40);
@@ -45,7 +25,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
     return () => {
       unsub();
-      clearInterval(interval);
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
@@ -66,47 +45,27 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
-          ? 'bg-[#070709]/80 backdrop-blur-md hairline-bottom py-3'
-          : 'bg-transparent py-5'
+          ? 'bg-[#070709]/80 backdrop-blur-lg border-b border-white/[0.06] py-3.5'
+          : 'bg-transparent py-6'
       }`}
     >
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 flex items-center justify-between">
-        {/* Brand / Identifier */}
+        {/* Confident Minimalist Brand Identity */}
         <a
           href="#"
           className="flex items-center gap-3 group"
           onMouseEnter={() => audioSynth.playHover()}
           data-cursor="NEBULA"
         >
-          <div className="w-8 h-8 rounded border border-white/20 bg-white/5 flex items-center justify-center group-hover:border-[#00F0FF] group-hover:bg-[#00F0FF]/10 transition-colors">
-            <span className="font-display font-extrabold text-sm text-[#00F0FF]">N</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-display font-bold text-sm tracking-wider text-white flex items-center gap-1.5">
-              NEBULA <span className="text-[#00F0FF]">/</span> 01
-            </span>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-[#8E8E93]">
-              Creative Tech Studio
-            </span>
-          </div>
+          <span className="font-display font-black text-base tracking-wider text-white">
+            NEBULA <span className="text-[#00F0FF]">/</span> 01
+          </span>
         </a>
 
-        {/* Global Clocks & Telemetry (Desktop Only) */}
-        <div className="hidden lg:flex items-center gap-6 font-mono text-[11px] text-[#8E8E93]">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00FF88] beacon-pulse" />
-            <span className="text-white font-medium">DISPATCH: ACTIVE</span>
-          </div>
-          <div className="h-3 w-[1px] bg-white/10" />
-          <div>{timeUtc}</div>
-          <div className="h-3 w-[1px] bg-white/10" />
-          <div className="text-[10px] text-[#00F0FF]">COORDS: 52.5200° N, 13.4050° E</div>
-        </div>
-
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7">
+        {/* Quiet Editorial Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8">
           {[
             { label: 'Manifesto', id: 'manifesto' },
             { label: 'Work', id: 'work' },
@@ -118,80 +77,62 @@ export const Navbar: React.FC<NavbarProps> = ({
               key={item.id}
               onClick={() => handleNavClick(item.id)}
               onMouseEnter={() => audioSynth.playHover()}
-              className="font-tech text-xs tracking-widest uppercase text-[#8E8E93] hover:text-[#00F0FF] transition-colors relative py-1 group"
+              className="font-tech text-xs tracking-widest uppercase text-[#8E8E93] hover:text-white transition-colors relative py-1"
               data-cursor="GO"
             >
               {item.label}
-              <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#00F0FF] group-hover:w-full transition-all duration-300" />
             </button>
           ))}
         </nav>
 
-        {/* Controls & CTA Button */}
+        {/* Streamlined Controls & Primary Action */}
         <div className="flex items-center gap-3">
-          {/* Grid Overlay Toggle */}
-          <button
-            onClick={() => {
-              audioSynth.playClick();
-              onToggleGrid();
-            }}
-            onMouseEnter={() => audioSynth.playHover()}
-            className={`hidden sm:flex items-center justify-center w-8 h-8 rounded border transition-colors ${
-              gridVisible
-                ? 'border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF]'
-                : 'border-white/10 text-[#8E8E93] hover:text-white hover:border-white/30'
-            }`}
-            title="Toggle Architectural Grid Overlay"
-            data-cursor="GRID"
-          >
-            <Grid className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Audio Synthesizer Toggle */}
+          {/* Minimalist Audio Synthesizer Toggle */}
           <button
             onClick={toggleSound}
             onMouseEnter={() => audioSynth.playHover()}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded border transition-all text-xs font-mono ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all text-xs font-mono ${
               !isMuted
-                ? 'border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF]'
-                : 'border-white/10 text-[#8E8E93] hover:text-white hover:border-white/30'
+                ? 'border-[#00F0FF] bg-[#00F0FF]/10 text-[#00F0FF]'
+                : 'border-white/10 text-[#8E8E93] hover:text-white hover:border-white/20'
             }`}
             title={isMuted ? 'Enable Sound Experience' : 'Mute Sound'}
             data-cursor="AUDIO"
           >
-            {!isMuted ? <Volume2 className="w-3.5 h-3.5 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
+            {!isMuted ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline text-[10px] uppercase tracking-wider">
-              {!isMuted ? 'AUDIO ON' : 'AUDIO OFF'}
+              {!isMuted ? 'SOUND ON' : 'SOUND OFF'}
             </span>
           </button>
 
-          {/* Magnetic Initiate Project CTA */}
+          {/* Primary Initiate CTA Button */}
           <button
             onClick={() => {
               audioSynth.playClick();
               onOpenContact();
             }}
             onMouseEnter={() => audioSynth.playHover()}
-            className="group relative inline-flex items-center gap-2 px-4 py-1.5 rounded border border-white/20 bg-white text-black font-tech font-bold text-xs uppercase tracking-wider hover:bg-[#00F0FF] hover:border-[#00F0FF] transition-all duration-300"
+            className="group relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/20 bg-white text-black font-tech font-bold text-xs uppercase tracking-wider hover:bg-[#00F0FF] hover:border-[#00F0FF] transition-all duration-300 shadow-sm"
             data-cursor="TALK"
+            data-magnetic="true"
           >
             <span>Initiate</span>
             <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-[#8E8E93] hover:text-white"
+            className="md:hidden p-2 text-[#8E8E93] hover:text-white font-mono text-xs"
           >
-            <Terminal className="w-5 h-5" />
+            {mobileMenuOpen ? 'CLOSE' : 'MENU'}
           </button>
         </div>
       </div>
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-full bg-[#070709]/95 backdrop-blur-xl hairline-bottom px-6 py-6 flex flex-col gap-4 border-t border-white/10">
+        <div className="md:hidden fixed inset-x-0 top-full bg-[#070709]/95 backdrop-blur-xl border-b border-white/10 px-6 py-6 flex flex-col gap-4">
           {['manifesto', 'work', 'lab', 'services', 'process'].map((id) => (
             <button
               key={id}
@@ -206,7 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               setMobileMenuOpen(false);
               onOpenContact();
             }}
-            className="w-full mt-2 py-3 rounded bg-[#00F0FF] text-black font-tech font-bold text-xs uppercase tracking-widest text-center"
+            className="w-full mt-2 py-3 rounded-full bg-[#00F0FF] text-black font-tech font-bold text-xs uppercase tracking-widest text-center"
           >
             Initiate Project
           </button>

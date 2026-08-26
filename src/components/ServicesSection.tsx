@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Sparkles, Code2, Box, Wand2, Radio, Compass } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { STUDIO_SERVICES } from '../data/studioData';
 import type { Service } from '../data/studioData';
 import { audioSynth } from '../utils/audioSynth';
@@ -15,14 +15,6 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
 }) => {
   const [expandedId, setExpandedId] = useState<string>('creative-dev');
 
-  const icons: Record<string, React.ReactNode> = {
-    'creative-dev': <Code2 className="w-5 h-5 text-[#00F0FF]" />,
-    '3d-experiences': <Box className="w-5 h-5 text-[#7000FF]" />,
-    'motion-design': <Wand2 className="w-5 h-5 text-[#00FF88]" />,
-    'installations': <Radio className="w-5 h-5 text-[#FFB800]" />,
-    'art-direction': <Compass className="w-5 h-5 text-[#FF0055]" />,
-  };
-
   const handleMouseEnter = (service: Service) => {
     audioSynth.playHover();
     setExpandedId(service.id);
@@ -34,27 +26,26 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
   };
 
   return (
-    <section id="services" className="relative py-28 md:py-36 px-6 md:px-12 max-w-[1600px] mx-auto z-10 select-none">
+    <section id="services" className="relative py-32 md:py-48 px-6 md:px-12 max-w-[1600px] mx-auto z-10 select-none">
       {/* Section Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-20">
         <div>
           <div className="flex items-center gap-3 font-mono text-xs text-[#00F0FF] mb-4">
-            <span className="w-2 h-2 rounded-full bg-[#00F0FF]" />
-            <span className="tracking-widest uppercase font-semibold">05 / CAPABILITIES & SERVICES</span>
-            <div className="h-[1px] w-16 bg-[#00F0FF]/30" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00F0FF]" />
+            <span className="tracking-widest uppercase font-semibold">05 / CAPABILITIES</span>
           </div>
-          <h2 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl text-white tracking-tight uppercase">
+          <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white tracking-tight uppercase">
             HOW WE BUILD
           </h2>
         </div>
 
-        <p className="font-sans text-sm md:text-base text-[#8E8E93] max-w-md leading-relaxed">
+        <p className="font-sans text-sm md:text-base text-[#8E8E93] max-w-md leading-relaxed font-light">
           Every capability is built upon bespoke code, mathematical rigour, and spatial choreography. No off-the-shelf templates.
         </p>
       </div>
 
-      {/* Editorial Interactive List */}
-      <div className="hairline-top" onMouseLeave={handleMouseLeave}>
+      {/* Editorial Interactive List (Minimal, High-Legibility) */}
+      <div className="border-t border-white/[0.08]" onMouseLeave={handleMouseLeave}>
         {STUDIO_SERVICES.map((service) => {
           const isExpanded = expandedId === service.id;
 
@@ -62,24 +53,16 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
             <div
               key={service.id}
               onMouseEnter={() => handleMouseEnter(service)}
-              className={`hairline-bottom transition-all duration-500 cursor-pointer ${
-                isExpanded ? 'bg-white/[0.035] py-10 md:py-14 pl-4 sm:pl-8' : 'py-8 hover:bg-white/[0.015]'
+              className={`border-b border-white/[0.08] transition-all duration-500 cursor-pointer ${
+                isExpanded ? 'py-12 md:py-16' : 'py-8 hover:opacity-100 opacity-60'
               }`}
               data-cursor="CAPABILITY"
             >
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                {/* Index Number, Icon & Title */}
-                <div className="md:col-span-6 flex items-start gap-5">
-                  <span className="font-mono text-sm text-[#00F0FF] font-bold pt-1">{service.num} //</span>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                {/* Index Number & Title */}
+                <div className="md:col-span-6 flex items-baseline gap-6">
+                  <span className="font-mono text-xs text-[#00F0FF] font-semibold">{service.num} //</span>
                   <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 rounded-lg bg-white/5 border border-white/10">
-                        {icons[service.id]}
-                      </div>
-                      <span className="font-mono text-xs text-[#8E8E93] tracking-wider uppercase">
-                        {service.tag}
-                      </span>
-                    </div>
                     <h3
                       className={`font-display font-black text-3xl sm:text-4xl lg:text-5xl uppercase tracking-tight transition-colors duration-300 ${
                         isExpanded ? 'text-white' : 'text-[#8E8E93]'
@@ -87,12 +70,15 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                     >
                       {service.title}
                     </h3>
+                    <span className="font-mono text-xs text-[#8E8E93]/70 mt-2 block tracking-wider uppercase">
+                      {service.tag}
+                    </span>
                   </div>
                 </div>
 
-                {/* Description & Capabilities */}
+                {/* Narrative & Capabilities */}
                 <div className="md:col-span-6 space-y-6">
-                  <p className="font-sans text-sm sm:text-base text-[#8E8E93] leading-relaxed">
+                  <p className="font-sans text-sm sm:text-base text-[#8E8E93] leading-relaxed font-light">
                     {service.description}
                   </p>
 
@@ -101,10 +87,10 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                     {service.capabilities.map((cap, i) => (
                       <span
                         key={i}
-                        className={`font-mono text-xs px-3 py-1 rounded-lg border transition-all ${
+                        className={`font-mono text-xs px-3 py-1 rounded-full border transition-all ${
                           isExpanded
-                            ? 'border-[#00F0FF]/40 bg-[#00F0FF]/10 text-white'
-                            : 'border-white/10 bg-white/5 text-[#8E8E93]'
+                            ? 'border-white/20 bg-white/5 text-white'
+                            : 'border-white/5 text-[#8E8E93]'
                         }`}
                       >
                         {cap}
@@ -118,28 +104,20 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
         })}
       </div>
 
-      {/* Bottom Commission Banner */}
-      <div className="mt-16 flex flex-wrap items-center justify-between gap-6 p-8 rounded-2xl border border-white/15 bg-[#0E0E12]/80 backdrop-blur-xl shadow-2xl">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl border border-[#00F0FF] bg-[#00F0FF]/10 flex items-center justify-center text-[#00F0FF] shadow-lg shadow-[#00F0FF]/20">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <div>
-            <h4 className="font-display font-bold text-lg text-white">Have a bespoke technical challenge?</h4>
-            <p className="font-sans text-xs text-[#8E8E93]">We build customized WebGL & WebGPU pipelines from scratch.</p>
-          </div>
-        </div>
+      {/* Understated Commission Link */}
+      <div className="mt-16 flex items-center justify-between border-t border-white/[0.08] pt-8">
+        <span className="font-mono text-xs text-[#8E8E93]">BESPOKE WEBGPU & SHADER PIPELINES</span>
         <button
           onClick={() => {
             audioSynth.playClick();
             onOpenContact();
           }}
           onMouseEnter={() => audioSynth.playHover()}
-          className="px-7 py-3 rounded-xl border border-white/20 bg-white hover:bg-[#00F0FF] hover:border-[#00F0FF] text-black font-tech font-bold text-xs uppercase tracking-wider transition-all duration-300 inline-flex items-center gap-2 shadow-lg shadow-white/10"
+          className="group font-tech text-xs uppercase tracking-widest text-white hover:text-[#00F0FF] inline-flex items-center gap-2 transition-colors"
           data-magnetic="true"
         >
           <span>Initiate Commission</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
         </button>
       </div>
     </section>

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Compass, Eye, Cpu, Sparkles } from 'lucide-react';
 import { audioSynth } from '../utils/audioSynth';
 
 export const ManifestoSection: React.FC = () => {
@@ -27,24 +26,23 @@ export const ManifestoSection: React.FC = () => {
     <section
       id="manifesto"
       ref={sectionRef}
-      className="relative py-28 md:py-40 px-6 md:px-12 max-w-[1600px] mx-auto z-10 select-none"
+      className="relative py-32 md:py-48 px-6 md:px-12 max-w-[1600px] mx-auto z-10 select-none"
     >
       {/* Section Tag */}
-      <div className="flex items-center gap-3 font-mono text-xs text-[#00F0FF] mb-12">
-        <span className="w-2 h-2 rounded-full bg-[#00F0FF]" />
+      <div className="flex items-center gap-3 font-mono text-xs text-[#00F0FF] mb-16">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#00F0FF]" />
         <span className="tracking-widest uppercase font-semibold">02 / MANIFESTO</span>
-        <div className="h-[1px] flex-1 max-w-[120px] bg-[#00F0FF]/30" />
       </div>
 
-      {/* Massive Editorial Headline with Scroll-Scrubbed Illumination */}
-      <div className="mb-20 md:mb-32">
+      {/* Primary Statement: Scroll-Scrubbed Typographic Illumination */}
+      <div className="mb-24 md:mb-36">
         <h2
-          className="font-display font-bold text-4xl sm:text-6xl lg:text-7xl leading-[1.08] tracking-tight max-w-5xl"
+          className="font-display font-black text-4xl sm:text-6xl lg:text-7xl leading-[1.06] tracking-tight max-w-5xl"
           data-cursor="READ"
         >
           <span
             className={`block transition-all duration-700 cursor-default ${
-              scrollFraction > 0.15 ? 'text-white translate-x-2' : 'text-white/30'
+              scrollFraction > 0.15 ? 'text-white' : 'text-white/20'
             }`}
             onMouseEnter={() => audioSynth.playHover()}
           >
@@ -52,7 +50,7 @@ export const ManifestoSection: React.FC = () => {
           </span>
           <span
             className={`block transition-all duration-700 cursor-default ${
-              scrollFraction > 0.35 ? 'text-[#8E8E93] translate-x-4' : 'text-[#8E8E93]/20'
+              scrollFraction > 0.35 ? 'text-[#8E8E93]' : 'text-[#8E8E93]/20'
             }`}
             onMouseEnter={() => audioSynth.playHover()}
           >
@@ -61,7 +59,7 @@ export const ManifestoSection: React.FC = () => {
           <span
             className={`block transition-all duration-700 cursor-default ${
               scrollFraction > 0.55
-                ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] via-[#7000FF] to-white translate-x-6'
+                ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] via-[#7000FF] to-white'
                 : 'text-white/10'
             }`}
             onMouseEnter={() => audioSynth.playHover()}
@@ -71,78 +69,45 @@ export const ManifestoSection: React.FC = () => {
         </h2>
       </div>
 
-      {/* Three Spatial Pillar Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 hairline-top pt-12">
+      {/* Three Editorial Philosophy Columns (Minimal & Clean, Non-Card Layout) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16 border-t border-white/[0.06] pt-12">
         {/* Pillar 01 */}
-        <div
-          className="group flex flex-col justify-between p-8 rounded-xl border border-white/10 bg-[#0E0E12]/80 backdrop-blur-md hover:border-[#00F0FF]/50 hover:bg-[#00F0FF]/[0.03] transition-all duration-500 shadow-xl"
-          onMouseEnter={() => audioSynth.playHover()}
-          data-cursor="PILLAR"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <span className="font-mono text-xs text-[#00F0FF] font-semibold">01 / 03</span>
-              <Compass className="w-5 h-5 text-[#8E8E93] group-hover:text-[#00F0FF] group-hover:rotate-45 transition-all duration-500" />
-            </div>
-            <h3 className="font-display font-bold text-xl sm:text-2xl text-white mb-4 group-hover:text-[#00F0FF] transition-colors">
-              Spatial Depth Over 2D Flatness
-            </h3>
-            <p className="font-sans text-sm text-[#8E8E93] leading-relaxed">
-              We reject the monotonous sea of identical rectangular cards and commoditized templates. We sculpt depth, volumetric lighting, and physical perspective directly into the canvas.
-            </p>
-          </div>
-          <div className="mt-8 font-mono text-[11px] text-white/40 group-hover:text-[#00F0FF] transition-colors flex items-center gap-2">
-            <Sparkles className="w-3 h-3" />
-            <span>SPATIAL PARADIGM →</span>
-          </div>
+        <div className="space-y-4">
+          <span className="font-mono text-xs text-[#00F0FF] font-semibold block">
+            01 // SPATIAL DEPTH
+          </span>
+          <h3 className="font-display font-bold text-xl sm:text-2xl text-white">
+            Depth Over Flatness
+          </h3>
+          <p className="font-sans text-sm text-[#8E8E93] leading-relaxed font-light">
+            We reject the monotonous sea of identical rectangular cards. We sculpt volumetric depth, lighting, and physical perspective directly into the canvas.
+          </p>
         </div>
 
         {/* Pillar 02 */}
-        <div
-          className="group flex flex-col justify-between p-8 rounded-xl border border-white/10 bg-[#0E0E12]/80 backdrop-blur-md hover:border-[#7000FF]/50 hover:bg-[#7000FF]/[0.03] transition-all duration-500 shadow-xl"
-          onMouseEnter={() => audioSynth.playHover()}
-          data-cursor="PILLAR"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <span className="font-mono text-xs text-[#7000FF] font-semibold">02 / 03</span>
-              <Cpu className="w-5 h-5 text-[#8E8E93] group-hover:text-[#7000FF] group-hover:scale-110 transition-all duration-500" />
-            </div>
-            <h3 className="font-display font-bold text-xl sm:text-2xl text-white mb-4 group-hover:text-[#7000FF] transition-colors">
-              Procedural Systems Over Static Assets
-            </h3>
-            <p className="font-sans text-sm text-[#8E8E93] leading-relaxed">
-              Instead of pre-rendered video loops and bloated assets, our experiences compute live mathematical fields, particle vectors, and real-time noise shaders at 60 FPS.
-            </p>
-          </div>
-          <div className="mt-8 font-mono text-[11px] text-white/40 group-hover:text-[#7000FF] transition-colors flex items-center gap-2">
-            <Sparkles className="w-3 h-3" />
-            <span>COMPUTATIONAL BEAUTY →</span>
-          </div>
+        <div className="space-y-4">
+          <span className="font-mono text-xs text-[#7000FF] font-semibold block">
+            02 // PROCEDURAL CODE
+          </span>
+          <h3 className="font-display font-bold text-xl sm:text-2xl text-white">
+            Generative Systems
+          </h3>
+          <p className="font-sans text-sm text-[#8E8E93] leading-relaxed font-light">
+            Instead of pre-rendered video loops and bloated assets, our experiences compute live mathematical fields, particle vectors, and real-time noise shaders at 60 FPS.
+          </p>
         </div>
 
         {/* Pillar 03 */}
-        <div
-          className="group flex flex-col justify-between p-8 rounded-xl border border-white/10 bg-[#0E0E12]/80 backdrop-blur-md hover:border-[#00FF88]/50 hover:bg-[#00FF88]/[0.03] transition-all duration-500 shadow-xl"
-          onMouseEnter={() => audioSynth.playHover()}
-          data-cursor="PILLAR"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <span className="font-mono text-xs text-[#00FF88] font-semibold">03 / 03</span>
-              <Eye className="w-5 h-5 text-[#8E8E93] group-hover:text-[#00FF88] group-hover:scale-110 transition-all duration-500" />
-            </div>
-            <h3 className="font-display font-bold text-xl sm:text-2xl text-white mb-4 group-hover:text-[#00FF88] transition-colors">
-              Emotive Resonance Over Utilitarian Boredom
-            </h3>
-            <p className="font-sans text-sm text-[#8E8E93] leading-relaxed">
-              Utilitarian function is the baseline, not the destination. We design digital worlds that evoke wonder, tactile pleasure, and unforgettable brand memorability.
-            </p>
-          </div>
-          <div className="mt-8 font-mono text-[11px] text-white/40 group-hover:text-[#00FF88] transition-colors flex items-center gap-2">
-            <Sparkles className="w-3 h-3" />
-            <span>VISCERAL IMPACT →</span>
-          </div>
+        <div className="space-y-4">
+          <span className="font-mono text-xs text-[#00FF88] font-semibold block">
+            03 // EMOTIVE IMPACT
+          </span>
+          <h3 className="font-display font-bold text-xl sm:text-2xl text-white">
+            Visceral Resonance
+          </h3>
+          <p className="font-sans text-sm text-[#8E8E93] leading-relaxed font-light">
+            Utilitarian function is the baseline, not the destination. We design digital worlds that evoke wonder, tactile pleasure, and unforgettable memorability.
+          </p>
         </div>
       </div>
     </section>

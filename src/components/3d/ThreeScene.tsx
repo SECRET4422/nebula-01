@@ -5,7 +5,6 @@ interface ThreeSceneProps {
   scrollProgress: number;
   scrollVelocity?: number;
   activeServiceHue?: number;
-  activeSection?: string;
 }
 
 export const ThreeScene: React.FC<ThreeSceneProps> = ({
@@ -28,7 +27,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     targetMouse: THREE.Vector2;
     clock: THREE.Clock;
     frameId: number;
-    // Target transforms for smooth lerp
     targetPos: THREE.Vector3;
     targetScale: number;
     targetCameraZ: number;
@@ -45,7 +43,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
     // 1. Scene & Camera
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x070709, 0.032);
+    scene.fog = new THREE.FogExp2(0x070709, 0.036);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     camera.position.set(0, 0, 7);
@@ -59,21 +57,19 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.15;
     container.appendChild(renderer.domElement);
 
     // 3. Artifact Geometry & Custom Shaders
     const artifactGroup = new THREE.Group();
     scene.add(artifactGroup);
 
-    // Main icosahedron geometry
-    const geom = new THREE.IcosahedronGeometry(1.6, 28);
+    const geom = new THREE.IcosahedronGeometry(1.5, 26);
 
-    // Custom GLSL Vertex & Fragment Shaders with Simplex Noise & Chromatic Fresnel
     const customMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uNoiseStrength: { value: 0.32 },
+        uNoiseStrength: { value: 0.26 },
         uColor1: { value: new THREE.Color(0x00f0ff) },
         uColor2: { value: new THREE.Color(0x7000ff) },
         uColor3: { value: new THREE.Color(0x00ff88) },
@@ -141,11 +137,11 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
           vNormal = normalize(normalMatrix * normal);
           vPosition = position;
           
-          float dynamicSpeed = uTime * 0.45 + uVelocity * 2.5;
-          float n = snoise(position * 1.4 + vec3(dynamicSpeed));
+          float dynamicSpeed = uTime * 0.38 + uVelocity * 1.8;
+          float n = snoise(position * 1.3 + vec3(dynamicSpeed));
           vDisplacement = n;
           
-          float amp = uNoiseStrength * (1.0 + uScroll * 1.1 + uVelocity * 1.5);
+          float amp = uNoiseStrength * (1.0 + uScroll * 0.8 + uVelocity * 1.2);
           vec3 newPosition = position + normal * (n * amp);
           gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
         }
@@ -163,13 +159,13 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
           vec3 viewDirection = normalize(-vPosition);
           float fresnel = dot(viewDirection, vNormal);
           fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
-          fresnel = pow(fresnel, 2.4);
+          fresnel = pow(fresnel, 2.5);
 
           vec3 baseColor = mix(uColor1, uColor2, smoothstep(-0.45, 0.45, vDisplacement));
-          vec3 finalColor = mix(baseColor, uColor3, fresnel * 0.85);
-          finalColor += fresnel * vec3(0.5, 0.95, 1.0);
+          vec3 finalColor = mix(baseColor, uColor3, fresnel * 0.8);
+          finalColor += fresnel * vec3(0.4, 0.9, 1.0);
 
-          gl_FragColor = vec4(finalColor, 0.90);
+          gl_FragColor = vec4(finalColor, 0.82);
         }
       `,
       transparent: true,
@@ -179,25 +175,25 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     const mainMesh = new THREE.Mesh(geom, customMaterial);
     artifactGroup.add(mainMesh);
 
-    // Outer wireframe cage
-    const wireGeom = new THREE.IcosahedronGeometry(1.85, 6);
+    // Outer wireframe cage (Restrained Opacity)
+    const wireGeom = new THREE.IcosahedronGeometry(1.75, 5);
     const wireMat = new THREE.MeshBasicMaterial({
       color: 0x00f0ff,
       wireframe: true,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.12,
     });
     const wireMesh = new THREE.Mesh(wireGeom, wireMat);
     artifactGroup.add(wireMesh);
 
-    // 4. Ambient Particle Nebula
-    const particleCount = 2200;
+    // 4. Ambient Particle Nebula (Balanced count: 1,400 for clarity)
+    const particleCount = 1400;
     const particleGeom = new THREE.BufferGeometry();
     const posArray = new Float32Array(particleCount * 3);
     const scaleArray = new Float32Array(particleCount);
 
     for (let i = 0; i < particleCount * 3; i += 3) {
-      const radius = 2.4 + Math.random() * 8.5;
+      const radius = 2.5 + Math.random() * 8.0;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
 
@@ -211,10 +207,10 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     particleGeom.setAttribute('aScale', new THREE.BufferAttribute(scaleArray, 1));
 
     const particleMat = new THREE.PointsMaterial({
-      size: 0.036,
+      size: 0.032,
       color: 0x00f0ff,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.35,
       blending: THREE.AdditiveBlending,
     });
 
@@ -222,14 +218,14 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     scene.add(particles);
 
     // 5. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
 
-    const pointLight1 = new THREE.PointLight(0x00f0ff, 3.8, 16);
+    const pointLight1 = new THREE.PointLight(0x00f0ff, 3.2, 16);
     pointLight1.position.set(4, 3, 4);
     scene.add(pointLight1);
 
-    const pointLight2 = new THREE.PointLight(0x7000ff, 3.2, 16);
+    const pointLight2 = new THREE.PointLight(0x7000ff, 2.8, 16);
     pointLight2.position.set(-4, -3, -2);
     scene.add(pointLight2);
 
@@ -245,7 +241,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // Handle Resize
+    // Resize Handler
     const handleResize = () => {
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
@@ -257,7 +253,6 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
 
     window.addEventListener('resize', handleResize);
 
-    // Store refs with interpolation targets
     sceneRef.current = {
       renderer,
       scene,
@@ -275,49 +270,47 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
       targetPos: new THREE.Vector3(0, 0, 0),
       targetScale: 1.0,
       targetCameraZ: 7.0,
-      targetWireOpacity: 0.18,
-      currentWireOpacity: 0.18,
+      targetWireOpacity: 0.12,
+      currentWireOpacity: 0.12,
       targetLightColor: new THREE.Color(0x00f0ff),
     };
 
-    // Continuous Animation Loop with Exponential Lerp Smoothing
+    // Animation Loop
     const animate = () => {
       if (!sceneRef.current) return;
       const state = sceneRef.current;
       const elapsedTime = state.clock.getElapsedTime();
 
       // Smooth mouse interpolation
-      state.mouse.x += (state.targetMouse.x - state.mouse.x) * 0.06;
-      state.mouse.y += (state.targetMouse.y - state.mouse.y) * 0.06;
+      state.mouse.x += (state.targetMouse.x - state.mouse.x) * 0.05;
+      state.mouse.y += (state.targetMouse.y - state.mouse.y) * 0.05;
 
       // Smooth camera and group transformation lerp
-      state.artifactGroup.position.lerp(state.targetPos, 0.05);
+      state.artifactGroup.position.lerp(state.targetPos, 0.04);
       const currentScale = state.artifactGroup.scale.x;
-      const newScale = THREE.MathUtils.lerp(currentScale, state.targetScale, 0.05);
+      const newScale = THREE.MathUtils.lerp(currentScale, state.targetScale, 0.04);
       state.artifactGroup.scale.setScalar(newScale);
 
-      state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, state.targetCameraZ, 0.05);
+      state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, state.targetCameraZ, 0.04);
 
       // Smooth wireframe opacity lerp
-      state.currentWireOpacity = THREE.MathUtils.lerp(state.currentWireOpacity, state.targetWireOpacity, 0.05);
+      state.currentWireOpacity = THREE.MathUtils.lerp(state.currentWireOpacity, state.targetWireOpacity, 0.04);
       (state.wireMesh.material as THREE.MeshBasicMaterial).opacity = state.currentWireOpacity;
 
       // Smooth light color lerp
-      state.pointLight1.color.lerp(state.targetLightColor, 0.05);
+      state.pointLight1.color.lerp(state.targetLightColor, 0.04);
 
-      // Update shader uniforms
+      // Update shader uniform time
       const mat = state.mainMesh.material as THREE.ShaderMaterial;
       mat.uniforms.uTime.value = elapsedTime;
 
-      // Base idle rotation + mouse parallax
-      state.artifactGroup.rotation.y = elapsedTime * 0.22 + state.mouse.x * 0.55;
-      state.artifactGroup.rotation.x = Math.sin(elapsedTime * 0.18) * 0.18 + state.mouse.y * 0.35;
-      state.wireMesh.rotation.y = -elapsedTime * 0.14;
-      state.wireMesh.rotation.z = elapsedTime * 0.08;
+      // Subtle rotation + mouse parallax
+      state.artifactGroup.rotation.y = elapsedTime * 0.18 + state.mouse.x * 0.45;
+      state.artifactGroup.rotation.x = Math.sin(elapsedTime * 0.15) * 0.15 + state.mouse.y * 0.3;
+      state.wireMesh.rotation.y = -elapsedTime * 0.12;
 
       // Rotate particle cloud gently
-      state.particles.rotation.y = elapsedTime * 0.035;
-      state.particles.rotation.x = state.mouse.y * 0.08;
+      state.particles.rotation.y = elapsedTime * 0.025;
 
       state.renderer.render(state.scene, state.camera);
       state.frameId = requestAnimationFrame(animate);
@@ -344,7 +337,7 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     };
   }, []);
 
-  // Update target states smoothly based on scrollProgress & velocity
+  // Spatial choreographic targets balanced for content hierarchy
   useEffect(() => {
     if (!sceneRef.current) return;
     const state = sceneRef.current;
@@ -353,53 +346,51 @@ export const ThreeScene: React.FC<ThreeSceneProps> = ({
     const mat = state.mainMesh.material as THREE.ShaderMaterial;
     if (mat && mat.uniforms) {
       mat.uniforms.uScroll.value = p;
-      mat.uniforms.uVelocity.value = Math.min(Math.abs(scrollVelocity) * 0.02, 0.6);
+      mat.uniforms.uVelocity.value = Math.min(Math.abs(scrollVelocity) * 0.015, 0.5);
     }
 
-    // Scroll state choreography with continuous spatial targets
     if (p < 0.18) {
-      // 01: HERO
+      // 01: HERO (Centered, balanced presence)
       state.targetPos.set(0, 0, 0);
-      state.targetScale = 1.0 + Math.sin(p * Math.PI) * 0.15;
-      state.targetWireOpacity = 0.18;
+      state.targetScale = 1.0;
+      state.targetWireOpacity = 0.14;
       state.targetCameraZ = 7.0;
     } else if (p < 0.38) {
-      // 02: MANIFESTO (Zoom into computational core)
+      // 02: MANIFESTO (Quiet phase: 3D recedes to let typography lead)
       const t = (p - 0.18) / 0.2;
-      state.targetPos.set(0, 0, 0);
-      state.targetScale = 1.0 + t * 0.75;
-      state.targetWireOpacity = 0.18 + t * 0.28;
-      state.targetCameraZ = 7.0 - t * 2.2;
+      state.targetPos.set(0, 0, -1.0);
+      state.targetScale = 1.0 + t * 0.4;
+      state.targetWireOpacity = 0.10 + t * 0.12;
+      state.targetCameraZ = 7.5;
     } else if (p < 0.62) {
-      // 03: SELECTED WORK (Move to side, orbital ring perspective)
-      const t = (p - 0.38) / 0.24;
-      state.targetPos.set(1.5 - t * 0.3, 0.15, 0);
-      state.targetScale = 1.25 - t * 0.25;
-      state.targetWireOpacity = 0.22;
-      state.targetCameraZ = 5.6;
+      // 03: SELECTED WORK (3D recedes to right edge with low opacity to let project photos shine)
+      state.targetPos.set(2.0, 0.1, -1.2);
+      state.targetScale = 0.9;
+      state.targetWireOpacity = 0.08;
+      state.targetCameraZ = 6.8;
     } else if (p < 0.78) {
       // 04: EXPERIMENT LAB
-      const t = (p - 0.62) / 0.16;
-      state.targetPos.set(-1.6 + t * 0.5, -0.15, 0);
-      state.targetScale = 1.1 + Math.sin(t * Math.PI) * 0.25;
-      state.targetCameraZ = 6.0;
+      state.targetPos.set(-1.8, -0.1, -1.0);
+      state.targetScale = 0.85;
+      state.targetWireOpacity = 0.08;
+      state.targetCameraZ = 7.0;
     } else if (p < 0.92) {
-      // 05/06: SERVICES & PROCESS
-      const t = (p - 0.78) / 0.14;
-      state.targetPos.set(0, 0.35 - t * 0.35, 0);
-      state.targetScale = 1.0;
-      state.targetCameraZ = 6.4;
+      // 05/06: SERVICES & PROCESS (Quiet background ambiance)
+      state.targetPos.set(0, 0.2, -0.8);
+      state.targetScale = 0.95;
+      state.targetWireOpacity = 0.10;
+      state.targetCameraZ = 7.0;
     } else {
-      // 07: FINAL CTA (Expanded particle horizon)
+      // 07: FINAL CTA (Atmospheric re-emergence)
       const t = (p - 0.92) / 0.08;
       state.targetPos.set(0, 0, 0);
-      state.targetScale = 1.0 + t * 0.45;
-      state.targetCameraZ = 7.0 - t * 1.4;
+      state.targetScale = 1.0 + t * 0.3;
+      state.targetWireOpacity = 0.18;
+      state.targetCameraZ = 7.0 - t * 1.0;
     }
 
-    // Dynamic light color on service hover
     if (activeServiceHue !== undefined) {
-      state.targetLightColor.setHSL(activeServiceHue / 360, 1.0, 0.58);
+      state.targetLightColor.setHSL(activeServiceHue / 360, 0.9, 0.55);
     } else {
       state.targetLightColor.setHex(0x00f0ff);
     }
