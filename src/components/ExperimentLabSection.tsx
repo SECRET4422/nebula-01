@@ -70,7 +70,7 @@ export const ExperimentLabSection: React.FC = () => {
         </div>
 
         {/* Experiment Viewport */}
-        <div className="relative flex-1 min-h-[460px] flex items-center justify-center p-4">
+        <div className="relative flex-1 min-h-[480px] flex items-center justify-center p-4">
           {activeTab === 'particles' && <ParticleExperiment />}
           {activeTab === 'typography' && <TypographyExperiment />}
           {activeTab === 'shader3d' && <Shader3DExperiment />}
@@ -81,7 +81,7 @@ export const ExperimentLabSection: React.FC = () => {
 };
 
 /* =========================================================================
-   EXPERIMENT A: PARTICLE ACCELERATOR WITH INTERACTIVE CONNECTIONS
+   EXPERIMENT A: PARTICLE ACCELERATOR
    ========================================================================= */
 const ParticleExperiment: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -198,7 +198,7 @@ const ParticleExperiment: React.FC = () => {
   }, [mode, colorTheme]);
 
   return (
-    <div className="relative w-full h-full min-h-[440px] flex items-center justify-center">
+    <div className="relative w-full h-full min-h-[460px] flex items-center justify-center">
       <canvas ref={canvasRef} className="w-full h-full rounded-xl cursor-crosshair" />
 
       <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-white/10 bg-black/75 backdrop-blur-md font-mono text-xs">
@@ -268,7 +268,7 @@ const TypographyExperiment: React.FC = () => {
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative w-full h-full min-h-[440px] flex flex-col items-center justify-center p-6 select-none overflow-hidden"
+      className="relative w-full h-full min-h-[460px] flex flex-col items-center justify-center p-6 select-none overflow-hidden"
     >
       <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 my-auto">
         {Array.from({ length: rows }).map((_, rowIndex) => (
@@ -316,71 +316,152 @@ const TypographyExperiment: React.FC = () => {
 };
 
 /* =========================================================================
-   EXPERIMENT C: 3D SHADER LATTICE
+   EXPERIMENT C: PROCEDURAL 3D SHADER LATTICE (HIGH VISIBILITY & INTERACTIVE)
    ========================================================================= */
 const Shader3DExperiment: React.FC = () => {
-  const mountRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [wireframe, setWireframe] = useState<boolean>(true);
-  const [geomType, setGeomType] = useState<'torus' | 'octa' | 'knot'>('knot');
+  const [geomType, setGeomType] = useState<'knot' | 'torus' | 'octa' | 'icosa'>('knot');
 
   useEffect(() => {
-    if (!mountRef.current) return;
-    const container = mountRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    if (!containerRef.current) return;
+    const container = containerRef.current;
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 0, 5);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    const createGeometry = (type: string) => {
-      if (type === 'torus') return new THREE.TorusGeometry(1.3, 0.45, 30, 100);
-      if (type === 'octa') return new THREE.OctahedronGeometry(1.6, 3);
-      return new THREE.TorusKnotGeometry(1.1, 0.35, 128, 32);
+    // Guaranteed dimensions
+    const getDims = () => {
+      const rect = container.getBoundingClientRect();
+      return {
+        width: Math.max(rect.width || container.clientWidth || 800, 320),
+        height: Math.max(rect.height || container.clientHeight || 460, 320),
+      };
     };
 
-    const material = new THREE.MeshNormalMaterial({
-      wireframe: wireframe,
+    const { width, height } = getDims();
+
+    // Scene & Camera
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.set(0, 0, 5.2);
+
+    // High performance WebGL Renderer
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
     });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    container.appendChild(renderer.domElement);
 
-    const currentMesh = new THREE.Mesh(createGeometry(geomType), material);
-    scene.add(currentMesh);
+    // Group for mouse rotation interaction
+    const group = new THREE.Group();
+    scene.add(group);
 
+    // Geometry Creator
+    const createGeometry = (type: string) => {
+      if (type === 'torus') return new THREE.TorusGeometry(1.25, 0.42, 32, 100);
+      if (type === 'octa') return new THREE.OctahedronGeometry(1.5, 4);
+      if (type === 'icosa') return new THREE.IcosahedronGeometry(1.5, 3);
+      return new THREE.TorusKnotGeometry(1.05, 0.36, 140, 32);
+    };
+
+    // Inner Glowing Mesh with Chromatic Normals
+    const innerGeom = createGeometry(geomType);
+    const innerMaterial = new THREE.MeshNormalMaterial({
+      wireframe: false,
+      transparent: true,
+      opacity: wireframe ? 0.35 : 0.92,
+    });
+    const innerMesh = new THREE.Mesh(innerGeom, innerMaterial);
+    group.add(innerMesh);
+
+    // Outer Cyber Wireframe Cage
+    const wireMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      wireframe: true,
+      transparent: true,
+      opacity: wireframe ? 0.85 : 0.25,
+    });
+    const wireMesh = new THREE.Mesh(innerGeom, wireMaterial);
+    wireMesh.scale.setScalar(1.02);
+    group.add(wireMesh);
+
+    // Interactive Lighting
+    const pointLight = new THREE.PointLight(0x00f0ff, 4, 15);
+    pointLight.position.set(3, 3, 3);
+    scene.add(pointLight);
+
+    const pointLight2 = new THREE.PointLight(0x7000ff, 3, 15);
+    pointLight2.position.set(-3, -3, -2);
+    scene.add(pointLight2);
+
+    // Interactive Drag Rotation
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - previousMousePosition.x;
+      const deltaY = e.clientY - previousMousePosition.y;
+
+      group.rotation.y += deltaX * 0.01;
+      group.rotation.x += deltaY * 0.01;
+
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseUp = () => {
+      isDragging = false;
+    };
+
+    renderer.domElement.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    // Animation Loop
     let frameId: number;
-    let time = 0;
+    let clock = new THREE.Clock();
 
     const animate = () => {
-      time += 0.012;
-      currentMesh.rotation.x = time * 0.8;
-      currentMesh.rotation.y = time * 1.2;
+      const delta = clock.getDelta();
+      if (!isDragging) {
+        group.rotation.x += delta * 0.4;
+        group.rotation.y += delta * 0.6;
+      }
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     };
 
     animate();
 
-    const handleResize = () => {
-      if (!container) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
+    // Resize Handler via ResizeObserver
+    const resizeObserver = new ResizeObserver(() => {
+      const { width: w, height: h } = getDims();
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
-    };
+    });
 
-    window.addEventListener('resize', handleResize);
+    resizeObserver.observe(container);
 
     return () => {
       cancelAnimationFrame(frameId);
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
+      renderer.domElement.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      innerGeom.dispose();
+      innerMaterial.dispose();
+      wireMaterial.dispose();
       renderer.dispose();
-      material.dispose();
-      currentMesh.geometry.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
@@ -388,21 +469,27 @@ const Shader3DExperiment: React.FC = () => {
   }, [wireframe, geomType]);
 
   return (
-    <div className="relative w-full h-full min-h-[440px] flex items-center justify-center">
-      <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+    <div className="relative w-full h-full min-h-[460px] flex items-center justify-center">
+      <div
+        ref={containerRef}
+        className="w-full h-full min-h-[460px] cursor-grab active:cursor-grabbing flex items-center justify-center"
+        data-cursor="ROTATE"
+      />
 
-      <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-white/10 bg-black/75 backdrop-blur-md font-mono text-xs">
-        <div className="flex items-center gap-3">
-          <span className="text-[#8E8E93]">GEOMETRY:</span>
-          {(['knot', 'torus', 'octa'] as const).map((g) => (
+      <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-white/15 bg-black/85 backdrop-blur-md font-mono text-xs shadow-2xl z-10">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <span className="text-[#8E8E93] font-bold">GEOMETRY:</span>
+          {(['knot', 'torus', 'octa', 'icosa'] as const).map((g) => (
             <button
               key={g}
               onClick={() => {
                 audioSynth.playClick();
                 setGeomType(g);
               }}
-              className={`px-3 py-1 rounded-md border transition-colors uppercase font-bold ${
-                geomType === g ? 'border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF]' : 'border-white/10 text-[#8E8E93]'
+              className={`px-3 py-1.5 rounded-lg border transition-all uppercase font-bold text-xs ${
+                geomType === g
+                  ? 'border-[#00F0FF] bg-[#00F0FF] text-black shadow-md shadow-[#00F0FF]/30'
+                  : 'border-white/15 text-[#8E8E93] hover:text-white hover:border-white/30'
               }`}
               data-magnetic="true"
             >
@@ -417,8 +504,10 @@ const Shader3DExperiment: React.FC = () => {
               audioSynth.playClick();
               setWireframe(!wireframe);
             }}
-            className={`px-3.5 py-1 rounded-md border transition-colors uppercase font-bold ${
-              wireframe ? 'border-[#00FF88] bg-[#00FF88]/15 text-[#00FF88]' : 'border-white/10 text-[#8E8E93]'
+            className={`px-4 py-1.5 rounded-lg border transition-all uppercase font-bold text-xs ${
+              wireframe
+                ? 'border-[#00FF88] bg-[#00FF88] text-black shadow-md shadow-[#00FF88]/30'
+                : 'border-white/15 text-[#8E8E93] hover:text-white hover:border-white/30'
             }`}
             data-magnetic="true"
           >
