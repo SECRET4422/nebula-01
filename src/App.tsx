@@ -19,6 +19,7 @@ export function App() {
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [scrollVelocity, setScrollVelocity] = useState<number>(0);
   const [activeServiceHue, setActiveServiceHue] = useState<number | undefined>(undefined);
+  const [activeProjectId, setActiveProjectId] = useState<string>('aether');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [contactOpen, setContactOpen] = useState<boolean>(false);
   const [gridVisible, setGridVisible] = useState<boolean>(false);
@@ -81,11 +82,12 @@ export function App() {
       {/* Velocity-Reactive Magnetic Custom Cursor */}
       <CustomCursor />
 
-      {/* Persistent WebGL 3D Centerpiece Canvas with Momentum & Velocity */}
+      {/* Persistent WebGL 3D Centerpiece Canvas with Adaptive World Personalities */}
       <ThreeScene
         scrollProgress={scrollProgress}
         scrollVelocity={scrollVelocity}
         activeServiceHue={activeServiceHue}
+        activeProjectId={activeProjectId}
       />
 
       {/* Sticky Navigation Header */}
@@ -99,7 +101,10 @@ export function App() {
       <main className="relative z-10">
         <HeroSection />
         <ManifestoSection />
-        <SelectedWorkSection onSelectProject={(p) => setSelectedProject(p)} />
+        <SelectedWorkSection
+          onSelectProject={(p) => setSelectedProject(p)}
+          onActiveProjectChange={(id) => setActiveProjectId(id)}
+        />
         <ExperimentLabSection />
         <ServicesSection
           onHoverService={(hue) => setActiveServiceHue(hue)}
