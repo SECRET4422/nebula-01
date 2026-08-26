@@ -37,12 +37,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    audioSynth.playSuccess();
+    audioSynth.playChime();
     setSubmitted(true);
 
     confetti({
-      particleCount: 80,
-      spread: 70,
+      particleCount: 90,
+      spread: 75,
       origin: { y: 0.6 },
       colors: ['#00F0FF', '#7000FF', '#00FF88', '#FFFFFF'],
     });
@@ -54,9 +54,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl animate-fadeIn">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-2xl animate-fadeIn select-none"
+      onClick={onClose}
+    >
       <div
-        className="relative w-full max-w-2xl bg-[#0E0E12] border border-white/15 rounded-2xl p-6 sm:p-10 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-2xl bg-[#0E0E12] border border-white/20 rounded-2xl p-6 sm:p-10 shadow-[0_0_60px_rgba(0,240,255,0.15)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -65,15 +68,17 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
             audioSynth.playClick();
             onClose();
           }}
-          className="absolute top-6 right-6 w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-[#8E8E93] hover:text-white hover:border-[#00F0FF] transition-colors"
+          onMouseEnter={() => audioSynth.playHover()}
+          className="absolute top-6 right-6 w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-[#8E8E93] hover:text-white hover:border-[#00F0FF] hover:bg-[#00F0FF]/15 transition-all"
           data-cursor="CLOSE"
+          data-magnetic="true"
         >
           <X className="w-4 h-4" />
         </button>
 
         {!submitted ? (
           <div>
-            <div className="flex items-center gap-2 font-mono text-xs text-[#00F0FF] mb-2">
+            <div className="flex items-center gap-2 font-mono text-xs text-[#00F0FF] mb-2 font-bold">
               <Sparkles className="w-3.5 h-3.5" />
               <span>PROJECT DISPATCH // INITIATE</span>
             </div>
@@ -87,7 +92,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1">
+                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1 font-bold">
                     Your Name *
                   </label>
                   <input
@@ -95,12 +100,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-white/15 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
                     placeholder="e.g. Elena Rostova"
                   />
                 </div>
                 <div>
-                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1">
+                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1 font-bold">
                     Email Address *
                   </label>
                   <input
@@ -108,7 +113,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-white/15 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
                     placeholder="elena@enterprise.io"
                   />
                 </div>
@@ -116,25 +121,25 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1">
+                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1 font-bold">
                     Company / Organization
                   </label>
                   <input
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-white/15 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
                     placeholder="e.g. Frontier Robotics"
                   />
                 </div>
                 <div>
-                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1">
+                  <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1 font-bold">
                     Anticipated Budget
                   </label>
                   <select
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-[#15151B] text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg border border-white/15 bg-[#15151B] text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none"
                   >
                     <option>$30k - $50k</option>
                     <option>$50k - $100k</option>
@@ -145,7 +150,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
               </div>
 
               <div>
-                <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1">
+                <label className="block font-mono text-[10px] uppercase text-[#8E8E93] mb-1 font-bold">
                   Project Vision & Scope
                 </label>
                 <textarea
@@ -153,15 +158,16 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) =
                   required
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 rounded-lg border border-white/15 bg-white/5 text-white font-sans text-sm focus:border-[#00F0FF] focus:outline-none resize-none"
                   placeholder="Describe your vision, timeline, and key milestones..."
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full mt-4 py-3.5 rounded-lg bg-[#00F0FF] hover:bg-white text-black font-tech font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-[#00F0FF]/20"
+                className="w-full mt-4 py-3.5 rounded-xl bg-[#00F0FF] hover:bg-white text-black font-tech font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-[#00F0FF]/25"
                 data-cursor="TRANSMIT"
+                data-magnetic="true"
               >
                 <Send className="w-4 h-4" />
                 <span>Transmit Project Dispatch</span>

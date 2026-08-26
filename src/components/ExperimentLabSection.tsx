@@ -7,7 +7,7 @@ export const ExperimentLabSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'particles' | 'typography' | 'shader3d'>('particles');
 
   return (
-    <section id="lab" className="relative py-28 md:py-36 px-6 md:px-12 max-w-[1600px] mx-auto z-10">
+    <section id="lab" className="relative py-28 md:py-36 px-6 md:px-12 max-w-[1600px] mx-auto z-10 select-none">
       {/* Section Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
@@ -22,7 +22,7 @@ export const ExperimentLabSection: React.FC = () => {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 p-1.5 rounded-lg border border-white/10 bg-[#0E0E12]/80 backdrop-blur-md">
+        <div className="flex items-center gap-2 p-1.5 rounded-xl border border-white/10 bg-[#0E0E12]/80 backdrop-blur-md">
           {[
             { id: 'particles', label: 'EXP_A // Particles' },
             { id: 'typography', label: 'EXP_B // Kinetic Text' },
@@ -35,12 +35,13 @@ export const ExperimentLabSection: React.FC = () => {
                 setActiveTab(tab.id as 'particles' | 'typography' | 'shader3d');
               }}
               onMouseEnter={() => audioSynth.playHover()}
-              className={`px-4 py-2 rounded font-mono text-xs tracking-wider uppercase transition-all ${
+              className={`px-4 py-2 rounded-lg font-mono text-xs tracking-wider uppercase transition-all ${
                 activeTab === tab.id
-                  ? 'bg-[#00F0FF] text-black font-bold shadow-lg shadow-[#00F0FF]/20'
+                  ? 'bg-[#00F0FF] text-black font-bold shadow-lg shadow-[#00F0FF]/25'
                   : 'text-[#8E8E93] hover:text-white hover:bg-white/5'
               }`}
               data-cursor="SELECT"
+              data-magnetic="true"
             >
               {tab.label}
             </button>
@@ -49,8 +50,8 @@ export const ExperimentLabSection: React.FC = () => {
       </div>
 
       {/* Lab Sandbox Canvas Container */}
-      <div className="relative rounded-2xl border border-white/15 bg-[#0E0E12]/90 backdrop-blur-xl overflow-hidden min-h-[560px] flex flex-col justify-between shadow-2xl">
-        {/* Top Sandbox Bar */}
+      <div className="relative rounded-2xl border border-white/15 bg-[#0E0E12]/95 backdrop-blur-xl overflow-hidden min-h-[580px] flex flex-col justify-between shadow-2xl">
+        {/* Top Sandbox Header Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-white/10 font-mono text-xs text-[#8E8E93] bg-black/40">
           <div className="flex items-center gap-3">
             <FlaskConical className="w-4 h-4 text-[#00F0FF]" />
@@ -68,8 +69,8 @@ export const ExperimentLabSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Experiment Content Rendering */}
-        <div className="relative flex-1 min-h-[440px] flex items-center justify-center p-4">
+        {/* Experiment Viewport */}
+        <div className="relative flex-1 min-h-[460px] flex items-center justify-center p-4">
           {activeTab === 'particles' && <ParticleExperiment />}
           {activeTab === 'typography' && <TypographyExperiment />}
           {activeTab === 'shader3d' && <Shader3DExperiment />}
@@ -80,7 +81,7 @@ export const ExperimentLabSection: React.FC = () => {
 };
 
 /* =========================================================================
-   EXPERIMENT A: PARTICLE ACCELERATOR
+   EXPERIMENT A: PARTICLE ACCELERATOR WITH INTERACTIVE CONNECTIONS
    ========================================================================= */
 const ParticleExperiment: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,23 +103,17 @@ const ParticleExperiment: React.FC = () => {
       vx: number;
       vy: number;
       size: number;
-      baseX: number;
-      baseY: number;
       alpha: number;
     }> = [];
 
-    const numParticles = 800;
+    const numParticles = 750;
     for (let i = 0; i < numParticles; i++) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
       particles.push({
-        x,
-        y,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: (Math.random() - 0.5) * 1.5,
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 1.6,
+        vy: (Math.random() - 0.5) * 1.6,
         size: Math.random() * 2.2 + 0.8,
-        baseX: x,
-        baseY: y,
         alpha: Math.random() * 0.7 + 0.3,
       });
     }
@@ -144,7 +139,7 @@ const ParticleExperiment: React.FC = () => {
     let animationId: number;
 
     const render = () => {
-      ctx.fillStyle = 'rgba(14, 14, 18, 0.22)';
+      ctx.fillStyle = 'rgba(14, 14, 18, 0.20)';
       ctx.fillRect(0, 0, width, height);
 
       const colorMap = {
@@ -154,22 +149,23 @@ const ParticleExperiment: React.FC = () => {
       };
       const rgb = colorMap[colorTheme];
 
-      particles.forEach((p) => {
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
         const dx = mouseX - p.x;
         const dy = mouseY - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (isHovering && dist < 220) {
-          const force = (220 - dist) / 220;
+        if (isHovering && dist < 240) {
+          const force = (240 - dist) / 240;
           if (mode === 'attract') {
-            p.vx += (dx / dist) * force * 1.2;
-            p.vy += (dy / dist) * force * 1.2;
+            p.vx += (dx / dist) * force * 1.3;
+            p.vy += (dy / dist) * force * 1.3;
           } else if (mode === 'repel') {
-            p.vx -= (dx / dist) * force * 2.0;
-            p.vy -= (dy / dist) * force * 2.0;
+            p.vx -= (dx / dist) * force * 2.2;
+            p.vy -= (dy / dist) * force * 2.2;
           } else if (mode === 'vortex') {
-            p.vx += (-dy / dist) * force * 2.5 + (dx / dist) * 0.4;
-            p.vy += (dx / dist) * force * 2.5 + (dy / dist) * 0.4;
+            p.vx += (-dy / dist) * force * 2.6 + (dx / dist) * 0.3;
+            p.vy += (dx / dist) * force * 2.6 + (dy / dist) * 0.3;
           }
         }
 
@@ -187,7 +183,7 @@ const ParticleExperiment: React.FC = () => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
-      });
+      }
 
       animationId = requestAnimationFrame(render);
     };
@@ -202,10 +198,10 @@ const ParticleExperiment: React.FC = () => {
   }, [mode, colorTheme]);
 
   return (
-    <div className="relative w-full h-full min-h-[420px] flex items-center justify-center">
+    <div className="relative w-full h-full min-h-[440px] flex items-center justify-center">
       <canvas ref={canvasRef} className="w-full h-full rounded-xl cursor-crosshair" />
 
-      <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-white/10 bg-black/70 backdrop-blur-md font-mono text-xs">
+      <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-white/10 bg-black/75 backdrop-blur-md font-mono text-xs">
         <div className="flex items-center gap-3">
           <span className="text-[#8E8E93]">PHYSICS:</span>
           {(['attract', 'repel', 'vortex'] as const).map((m) => (
@@ -215,9 +211,10 @@ const ParticleExperiment: React.FC = () => {
                 audioSynth.playClick();
                 setMode(m);
               }}
-              className={`px-2.5 py-1 rounded border transition-colors uppercase ${
+              className={`px-3 py-1 rounded-md border transition-colors uppercase font-bold ${
                 mode === m ? 'border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF]' : 'border-white/10 text-[#8E8E93]'
               }`}
+              data-magnetic="true"
             >
               {m}
             </button>
@@ -233,9 +230,10 @@ const ParticleExperiment: React.FC = () => {
                 audioSynth.playClick();
                 setColorTheme(c);
               }}
-              className={`px-2.5 py-1 rounded border transition-colors uppercase ${
+              className={`px-3 py-1 rounded-md border transition-colors uppercase font-bold ${
                 colorTheme === c ? 'border-white bg-white/20 text-white' : 'border-white/10 text-[#8E8E93]'
               }`}
+              data-magnetic="true"
             >
               {c}
             </button>
@@ -247,7 +245,7 @@ const ParticleExperiment: React.FC = () => {
 };
 
 /* =========================================================================
-   EXPERIMENT B: KINETIC TYPOGRAPHY DISTORTION
+   EXPERIMENT B: KINETIC MATRIX TYPOGRAPHY DISTORTION
    ========================================================================= */
 const TypographyExperiment: React.FC = () => {
   const [customText, setCustomText] = useState<string>('NEBULA COMPUTING');
@@ -270,26 +268,26 @@ const TypographyExperiment: React.FC = () => {
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative w-full h-full min-h-[420px] flex flex-col items-center justify-center p-6 select-none overflow-hidden"
+      className="relative w-full h-full min-h-[440px] flex flex-col items-center justify-center p-6 select-none overflow-hidden"
     >
-      <div className="flex flex-col items-center justify-center gap-3 my-auto">
+      <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 my-auto">
         {Array.from({ length: rows }).map((_, rowIndex) => (
-          <div key={rowIndex} className="flex gap-2 sm:gap-4 font-display font-black text-2xl sm:text-4xl lg:text-5xl">
+          <div key={rowIndex} className="flex gap-2 sm:gap-3.5 font-display font-black text-2xl sm:text-4xl lg:text-5xl tracking-tight">
             {chars.map((char, charIndex) => {
               const charKey = `${rowIndex}-${charIndex}`;
-              const offsetX = (charIndex - chars.length / 2) * 40;
-              const offsetY = (rowIndex - rows / 2) * 40;
+              const offsetX = (charIndex - chars.length / 2) * 44;
+              const offsetY = (rowIndex - rows / 2) * 44;
               const dist = Math.sqrt(
-                Math.pow(mousePos.x - (300 + offsetX), 2) + Math.pow(mousePos.y - (200 + offsetY), 2)
+                Math.pow(mousePos.x - (340 + offsetX), 2) + Math.pow(mousePos.y - (220 + offsetY), 2)
               );
-              const distort = Math.max(0, 1 - dist / 280);
+              const distort = Math.max(0, 1 - dist / 290);
 
               return (
                 <span
                   key={charKey}
                   style={{
-                    transform: `translateY(${distort * -24}px) scale(${1 + distort * 0.4}) rotate(${distort * 15}deg)`,
-                    color: distort > 0.4 ? '#00F0FF' : distort > 0.1 ? '#7000FF' : 'rgba(255, 255, 255, 0.25)',
+                    transform: `translateY(${distort * -28}px) scale(${1 + distort * 0.45}) rotate(${distort * 16}deg)`,
+                    color: distort > 0.4 ? '#00F0FF' : distort > 0.1 ? '#7000FF' : 'rgba(255, 255, 255, 0.28)',
                     transition: 'transform 0.1s ease-out, color 0.15s ease-out',
                   }}
                   className="inline-block will-change-transform"
@@ -302,8 +300,8 @@ const TypographyExperiment: React.FC = () => {
         ))}
       </div>
 
-      <div className="mt-6 w-full max-w-md flex items-center gap-3 p-2 rounded-lg border border-white/10 bg-black/60 backdrop-blur-md">
-        <span className="font-mono text-xs text-[#00F0FF] pl-2">INPUT:</span>
+      <div className="mt-6 w-full max-w-md flex items-center gap-3 p-2.5 rounded-xl border border-white/10 bg-black/70 backdrop-blur-md">
+        <span className="font-mono text-xs text-[#00F0FF] pl-2 font-bold">INPUT:</span>
         <input
           type="text"
           value={customText}
@@ -357,7 +355,7 @@ const Shader3DExperiment: React.FC = () => {
     let time = 0;
 
     const animate = () => {
-      time += 0.01;
+      time += 0.012;
       currentMesh.rotation.x = time * 0.8;
       currentMesh.rotation.y = time * 1.2;
       renderer.render(scene, camera);
@@ -390,10 +388,10 @@ const Shader3DExperiment: React.FC = () => {
   }, [wireframe, geomType]);
 
   return (
-    <div className="relative w-full h-full min-h-[420px] flex items-center justify-center">
+    <div className="relative w-full h-full min-h-[440px] flex items-center justify-center">
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-white/10 bg-black/70 backdrop-blur-md font-mono text-xs">
+      <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border border-white/10 bg-black/75 backdrop-blur-md font-mono text-xs">
         <div className="flex items-center gap-3">
           <span className="text-[#8E8E93]">GEOMETRY:</span>
           {(['knot', 'torus', 'octa'] as const).map((g) => (
@@ -403,9 +401,10 @@ const Shader3DExperiment: React.FC = () => {
                 audioSynth.playClick();
                 setGeomType(g);
               }}
-              className={`px-2.5 py-1 rounded border transition-colors uppercase ${
+              className={`px-3 py-1 rounded-md border transition-colors uppercase font-bold ${
                 geomType === g ? 'border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF]' : 'border-white/10 text-[#8E8E93]'
               }`}
+              data-magnetic="true"
             >
               {g}
             </button>
@@ -418,9 +417,10 @@ const Shader3DExperiment: React.FC = () => {
               audioSynth.playClick();
               setWireframe(!wireframe);
             }}
-            className={`px-3 py-1 rounded border transition-colors uppercase ${
+            className={`px-3.5 py-1 rounded-md border transition-colors uppercase font-bold ${
               wireframe ? 'border-[#00FF88] bg-[#00FF88]/15 text-[#00FF88]' : 'border-white/10 text-[#8E8E93]'
             }`}
+            data-magnetic="true"
           >
             WIREFRAME: {wireframe ? 'ON' : 'OFF'}
           </button>

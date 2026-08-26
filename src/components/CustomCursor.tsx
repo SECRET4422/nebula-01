@@ -5,10 +5,11 @@ export const CustomCursor: React.FC = () => {
   const dotRef = useRef<HTMLDivElement>(null);
   const [cursorText, setCursorText] = useState<string>('');
   const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [isMagnetic, setIsMagnetic] = useState<boolean>(false);
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if device is touch
+    // Disable on touch devices
     if (typeof window !== 'undefined' && 'ontouchstart' in window) {
       return;
     }
@@ -31,6 +32,20 @@ export const CustomCursor: React.FC = () => {
 
       // Check cursor data attribute on targets
       const target = (e.target as HTMLElement)?.closest('[data-cursor]');
+      const magneticTarget = (e.target as HTMLElement)?.closest('[data-magnetic]') as HTMLElement | null;
+
+      if (magneticTarget) {
+        const rect = magneticTarget.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        // Magnetic pull towards center
+        mouseX = centerX + (e.clientX - centerX) * 0.35;
+        mouseY = centerY + (e.clientY - centerY) * 0.35;
+        setIsMagnetic(true);
+      } else {
+        setIsMagnetic(false);
+      }
+
       if (target) {
         const text = target.getAttribute('data-cursor') || '';
         setCursorText(text);
@@ -49,13 +64,13 @@ export const CustomCursor: React.FC = () => {
     document.addEventListener('mouseleave', handleMouseLeave);
 
     const render = () => {
-      // Linear interpolation
-      cursorX += (mouseX - cursorX) * 0.15;
-      cursorY += (mouseY - cursorY) * 0.15;
-      dotX += (mouseX - dotX) * 0.45;
-      dotY += (mouseY - dotY) * 0.45;
+      // Linear interpolation with smooth spring damping
+      cursorX += (mouseX - cursorX) * 0.16;
+      cursorY += (mouseY - cursorY) * 0.16;
+      dotX += (mouseX - dotX) * 0.48;
+      dotY += (mouseY - dotY) * 0.48;
 
-      // Calculate velocity
+      // Calculate velocity for kinetic elongation
       const vx = mouseX - lastX;
       const vy = mouseY - lastY;
       velocity = Math.sqrt(vx * vx + vy * vy);
@@ -63,10 +78,12 @@ export const CustomCursor: React.FC = () => {
       lastY = mouseY;
 
       const angle = Math.atan2(vy, vx) * (180 / Math.PI);
-      const stretch = Math.min(velocity * 0.015, 0.45);
+      const stretch = Math.min(velocity * 0.012, 0.4);
 
       if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) translate(-50%, -50%) rotate(${angle}deg) scale(${1 + stretch}, ${1 - stretch * 0.5})`;
+        cursorRef.current.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) translate(-50%, -50%) rotate(${angle}deg) scale(${
+          1 + stretch
+        }, ${1 - stretch * 0.45})`;
       }
 
       if (dotRef.current) {
@@ -93,13 +110,13 @@ export const CustomCursor: React.FC = () => {
       <div
         ref={cursorRef}
         className={`fixed top-0 left-0 pointer-events-none z-[9999] rounded-full border border-[#00F0FF]/60 mix-blend-difference flex items-center justify-center transition-all duration-150 ease-out will-change-transform ${
-          isHovered
-            ? 'w-16 h-16 bg-[#00F0FF]/15 border-[#00F0FF]'
+          isHovered || isMagnetic
+            ? 'w-16 h-16 bg-[#00F0FF]/15 border-[#00F0FF] scale-110'
             : 'w-8 h-8 bg-transparent'
         }`}
       >
         {cursorText && (
-          <span className="font-mono text-[9px] uppercase tracking-widest text-[#00F0FF] font-semibold whitespace-nowrap">
+          <span className="font-mono text-[9px] uppercase tracking-widest text-[#00F0FF] font-bold whitespace-nowrap drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]">
             {cursorText}
           </span>
         )}
@@ -109,7 +126,7 @@ export const CustomCursor: React.FC = () => {
       <div
         ref={dotRef}
         className={`fixed top-0 left-0 pointer-events-none z-[9999] rounded-full bg-[#00F0FF] transition-opacity duration-100 will-change-transform ${
-          isHovered ? 'w-1.5 h-1.5 opacity-40' : 'w-1 h-1 opacity-90'
+          isHovered ? 'w-1.5 h-1.5 opacity-30' : 'w-1 h-1 opacity-90'
         }`}
       />
     </>

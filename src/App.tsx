@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ThreeScene } from './components/3d/ThreeScene';
 import { CustomCursor } from './components/CustomCursor';
 import { Navbar } from './components/Navbar';
@@ -12,26 +12,56 @@ import { CtaSection } from './components/CtaSection';
 import { Footer } from './components/Footer';
 import { ProjectModal } from './components/ProjectModal';
 import { ContactModal } from './components/ContactModal';
+import { audioSynth } from './utils/audioSynth';
 import type { Project } from './data/studioData';
 
 export function App() {
   const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [scrollVelocity, setScrollVelocity] = useState<number>(0);
   const [activeServiceHue, setActiveServiceHue] = useState<number | undefined>(undefined);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [contactOpen, setContactOpen] = useState<boolean>(false);
   const [gridVisible, setGridVisible] = useState<boolean>(false);
 
+  const lastScrollY = useRef<number>(0);
+  const lastScrollTime = useRef<number>(performance.now());
+
   useEffect(() => {
+    let timeoutId: number;
+
     const handleScroll = () => {
+      const now = performance.now();
+      const currentScrollY = window.scrollY;
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = totalHeight > 0 ? window.scrollY / totalHeight : 0;
+      const progress = totalHeight > 0 ? currentScrollY / totalHeight : 0;
       setScrollProgress(progress);
+
+      // Modulate audio acoustics
+      audioSynth.updateScrollAcoustics(progress);
+
+      // Measure scroll velocity
+      const dt = Math.max(now - lastScrollTime.current, 10);
+      const dy = Math.abs(currentScrollY - lastScrollY.current);
+      const velocity = (dy / dt) * 10;
+      setScrollVelocity(velocity);
+
+      lastScrollY.current = currentScrollY;
+      lastScrollTime.current = now;
+
+      // Relax velocity to 0 after scrolling stops
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        setScrollVelocity(0);
+      }, 150);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return (
@@ -51,9 +81,10 @@ export function App() {
       {/* Velocity-Reactive Magnetic Custom Cursor */}
       <CustomCursor />
 
-      {/* Persistent WebGL 3D Centerpiece Canvas */}
+      {/* Persistent WebGL 3D Centerpiece Canvas with Momentum & Velocity */}
       <ThreeScene
         scrollProgress={scrollProgress}
+        scrollVelocity={scrollVelocity}
         activeServiceHue={activeServiceHue}
       />
 
